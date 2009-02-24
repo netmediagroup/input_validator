@@ -30,18 +30,12 @@ class InputValidator
     ## Remove all characters that are not digits to phone numbers before the validation is performed.
     def normalize_phone_number(model, attrs_to_check)
       attrs_to_check.each do |attribute|
-        ## The phone number attribute may also be paired with a 'raw' attribute.
+        ## The phone number will only be normalized if it is paired with a 'raw_' attribute.
         ## The raw attribute is used for displaying so the substitution is performed on it but saved to the regualar attribute.
-        raw_attr = begin
-          model.method("raw_#{attribute.to_s}").call
-        rescue
-          nil
-        end
 
-        if raw_attr
-          model[attribute] = raw_attr.gsub(/\D/, '')
-        elsif model[attribute]
-          model[attribute].gsub!(/\D/, '')
+        if model.methods.include?("raw_#{attribute.to_s}")
+          raw_attribute = model.method("raw_#{attribute.to_s}").call
+          model[attribute] = raw_attribute.gsub(/\D/, '') unless raw_attribute.nil?
         end
       end
     end
