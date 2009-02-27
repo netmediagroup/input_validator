@@ -45,7 +45,7 @@ class InputValidator
       attrs_to_check.each do |attribute|
         value = get_attr_value(model, attribute)
         unless value.blank? || value.to_s =~ /\A[\w-]+(\.[\w-]+)*@([\w-]+(\.[\w-]+)*?\.[a-zA-Z]{2,6}|(\d{1,3}\.){3}\d{1,3})(:\d{4})?\Z/
-          model.errors.add(attribute, ActiveRecord::Errors.default_error_messages[:invalid])
+          model.errors.add(attribute, I18n.translate('activerecord.errors.messages')[:invalid])
         end
       end
     end
@@ -60,11 +60,11 @@ class InputValidator
 
         ## This two validations can be used as validates_numericality_of and validates_length_of,
         ## but this allows it to always be used for phone numbers.
-        model.errors.add(attribute, ActiveRecord::Errors.default_error_messages[:not_a_number]) unless value.to_s =~ /\A[+-]?\d+\Z/
-        model.errors.add(attribute, (ActiveRecord::Errors.default_error_messages[:wrong_length] % 10)) unless value.to_s.size == 10
+        model.errors.add(attribute, I18n.translate('activerecord.errors.messages')[:not_a_number]) unless value.to_s =~ /\A[+-]?\d+\Z/
+        model.errors.add(attribute, (I18n.translate('activerecord.errors.messages')[:wrong_length] % 10)) unless value.to_s.size == 10
 
         ## Validate phony phone numbers; no real phone number should have these variations.
-        model.errors.add(attribute, ActiveRecord::Errors.default_error_messages[:invalid]) if (
+        model.errors.add(attribute, I18n.translate('activerecord.errors.messages')[:invalid]) if (
           value.to_s =~ /\A(1{3}|2{3}|3{3}|4{3}|5{3}|6{3}|7{3}|8{3}|9{3}|0{3}|123|911)/ ||
           value.to_s =~ /\A.{3}(5{3}|0{3}|012|123|911)/ ||
           value.to_s =~ /(1{7}|2{7}|3{7}|4{7}|5{7}|6{7}|7{7}|8{7}|9{7}|0{7}|1234567|3456789|4567890)\Z/
@@ -83,7 +83,7 @@ class InputValidator
           for bw in self.class.bad_word_list
             check = true if value.match(Regexp.new('\b' + bw + '\b', Regexp::IGNORECASE))
           end
-          model.errors.add(attribute, ActiveRecord::Errors.default_error_messages[:invalid]) if check
+          model.errors.add(attribute, I18n.translate('activerecord.errors.messages')[:invalid]) if check
         end
       end
     end
