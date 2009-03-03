@@ -1,2 +1,2 @@
 require 'input_validator'
-require 'extended_validation'
+require 'input_validation'
