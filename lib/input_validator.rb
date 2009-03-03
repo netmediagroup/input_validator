@@ -117,9 +117,14 @@ class InputValidator
       attrs_to_check.each do |attribute|
         check = check_phone_number(attribute)
         if check
-          check.each {|c| model.errors.add(attribute, I18n.translate('activerecord.errors.messages')[c]) }
+          check.each do |c|
+            if c == :wrong_length
+              model.errors.add(attribute, I18n.translate('activerecord.errors.messages.wrong_length', :count => 10))
+            else
+              model.errors.add(attribute, I18n.translate('activerecord.errors.messages')[c])
+            end
+          end
         end
-        # model.errors.add(attribute, (I18n.translate('activerecord.errors.messages')[:wrong_length] % 10)) unless value.to_s.size == 10
       end
     end
 
