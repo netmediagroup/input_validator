@@ -86,17 +86,24 @@ class InputValidator
     def normalize_phone_numbers(attrs_to_check)
       attrs_to_check.each do |attribute|
         value = normalize_phone_number(attribute)
-        model[attribute] = value if value
+        model.send("#{attribute}=", value) if value
       end
     end
 
     def normalize_phone_number(attribute)
-      ## The phone number will only be normalized if it is paired with a 'raw_' attribute.
+      ## The phone number can be normalized if it is paired with either a 'raw_' attribute OR '_area', '_prefix', and '_suffix' attributes.
       ## The raw attribute is used for displaying so the substitution is performed on it but saved to the regualar attribute.
+      ## Area, Prefix, and Suffix attributes allow the phone number to be seperated into 3 separate input boxes.
+
       if model.methods.include?("raw_#{attribute.to_s}")
-        raw_attribute = model.method("raw_#{attribute.to_s}").call
-        return self.class.normalize_phone_number_value(raw_attribute) unless raw_attribute.nil?
+        normalize_value = model.method("raw_#{attribute.to_s}").call
+      elsif model.methods.include?("#{attribute.to_s}_area") && model.methods.include?("#{attribute.to_s}_prefix") && model.methods.include?("#{attribute.to_s}_suffix")
+        area_attribute = model.method("#{attribute.to_s}_area").call
+        prefix_attribute = model.method("#{attribute.to_s}_prefix").call
+        suffix_attribute = model.method("#{attribute.to_s}_suffix").call
+        normalize_value = area_attribute.to_s + prefix_attribute.to_s + suffix_attribute.to_s
       end
+      return self.class.normalize_phone_number_value(normalize_value) unless normalize_value.nil?
     end
 
     ## Email specific validations.
@@ -119,7 +126,7 @@ class InputValidator
         if check
           check.each do |c|
             if c == :wrong_length
-              model.errors.add(attribute, I18n.translate('activerecord.errors.messages.wrong_length', :count => 10))
+              model.errors.add(attribute, I18n.translate('activerecord.errors.messages.wrong_length', :count => 10).gsub('characters','numbers'))
             else
               model.errors.add(attribute, I18n.translate('activerecord.errors.messages')[c])
             end
