@@ -28,7 +28,7 @@ class InputValidator
   end
 
   def self.check_email_format_value(value)
-    return :invalid unless value.blank? || value.to_s =~ /\A[\w-]+(\.[\w-]+)*@([\w-]+(\.[\w-]+)*?\.[a-zA-Z]{2,6}|(\d{1,3}\.){3}\d{1,3})(:\d{4})?\Z/
+    return :invalid unless value.blank? || valid_email_format?(value)
   end
 
   def self.check_phone_number_value(value)
@@ -42,27 +42,36 @@ class InputValidator
     check << :not_a_number unless value.to_s =~ /\A[+-]?\d+\Z/
     check << :wrong_length unless value.to_s.size == 10
 
-    ## Validate phony phone numbers; no real phone number should have these variations.
-    check << :invalid if (
-      value.to_s =~ /\A(1{3}|2{3}|3{3}|4{3}|5{3}|6{3}|7{3}|8{3}|9{3}|0{3}|123|911)/ ||
-      value.to_s =~ /\A.{3}(5{3}|0{3}|012|123|911)/ ||
-      value.to_s =~ /(1{7}|2{7}|3{7}|4{7}|5{7}|6{7}|7{7}|8{7}|9{7}|0{7}|1234567|3456789|4567890)\Z/
-    )
+    check << :invalid unless valid_phone_number?(value)
 
     return check unless check.empty?
   end
 
   def self.check_bad_word(value)
-    if value
-      check = false
-      for bw in bad_word_list
-        check = true if value.match(Regexp.new('\b' + bw + '\b', Regexp::IGNORECASE))
-      end
-      return :invalid if check
-    end
+    return :invalid unless valid_words?(value)
   end
 
 
+  def self.valid_email_format?(value)
+    return (value.to_s =~ /\A[\w-]+(\.[\w-]+)*@([\w-]+(\.[\w-]+)*?\.[a-zA-Z]{2,6}|(\d{1,3}\.){3}\d{1,3})(:\d{4})?\Z/) ? true : false
+  end
+
+  def self.valid_phone_number?(value)
+    ## Validate phony phone numbers; no real phone number should have these variations.
+    return (
+      value.to_s =~ /\A(1{3}|2{3}|3{3}|4{3}|5{3}|6{3}|7{3}|8{3}|9{3}|0{3}|123|911)/ ||
+      value.to_s =~ /\A.{3}(5{3}|0{3}|012|123|911)/ ||
+      value.to_s =~ /(1{7}|2{7}|3{7}|4{7}|5{7}|6{7}|7{7}|8{7}|9{7}|0{7}|1234567|3456789|4567890)\Z/
+    ) ? false : true
+  end
+
+  def self.valid_words?(value)
+    check = true
+    for bw in bad_word_list
+      check = false if value.match(Regexp.new('\b' + bw + '\b', Regexp::IGNORECASE))
+    end if value
+    return check
+  end
 
 
   private
@@ -157,7 +166,7 @@ class InputValidator
     ## Retrieve and cache the bad word list for use in validations.
     def self.bad_word_list
       unless @bad_word_list
-        badwords = IO.readlines(File.join(File.dirname(__FILE__), 'badwordlist.txt'))
+        badwords = IO.readlines(File.join(File.dirname(__FILE__), 'badwordlist.txt')) + IO.readlines(File.join(File.dirname(__FILE__), 'spamwordlist.txt'))
         badwords.collect! {|x| x.strip}
       end
       @bad_word_list ||= badwords
